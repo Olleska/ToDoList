@@ -102,6 +102,9 @@ function renderTask(task){
     const taskHTML = `<li id="${task.id}" class="list-group-item d-flex justify-content-between task-item">
 					<span class="${cssClass}">${task.text}</span>
 					<div class="task-item__buttons">
+                        <button type="button" data-action="edit" class="btn-action">
+							<img src="./img/pen.svg" alt="Done" width="18" height="18">
+						</button>
 						<button type="button" data-action="done" class="btn-action">
 							<img src="./img/tick.svg" alt="Done" width="18" height="18">
 						</button>
