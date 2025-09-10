@@ -86,28 +86,22 @@ function doneTask(event){
 }
 
 function editTask(event) {
-    // Проверяем, что кликнули именно по кнопке редактирования
     if (event.target.dataset.action !== "edit") return;
 
-    // Находим задачу в DOM
     const parentNode = event.target.closest('.list-group-item');
     const id = Number(parentNode.id);
 
-    // Находим задачу в массиве
     const task = tasks.find(task => task.id === id);
     if (!task) return;
 
-    // Находим элемент с текстом задачи
     const taskTitleElement = parentNode.querySelector('.task-title');
     if (!taskTitleElement) return;
 
-    // Создаём инпут для редактирования
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'form-control form-control-sm';
     input.value = task.text;
 
-    // Стили, чтобы не ломался макет
     input.style.width = `$600px`;
     input.style.minWidth = '50px';
     input.style.maxWidth = '900px';
@@ -115,23 +109,18 @@ function editTask(event) {
     input.style.borderRadius = '4px';
     input.style.padding = '2px 6px';
 
-    // Заменяем текст на инпут
     taskTitleElement.replaceWith(input);
 
-    // Фокус на поле
     input.focus();
 
-    // Флаг, чтобы избежать двойного вызова при Enter + blur
     let isHandled = false;
 
-    // Сохраняем при потере фокуса
     input.addEventListener('blur', () => {
         if (isHandled) return;
         isHandled = true;
         finishEditing();
     });
 
-    // Сохраняем по Enter, отменяем по Escape
     input.addEventListener('keydown', (e) => {
         if (isHandled) return;
 
@@ -146,38 +135,30 @@ function editTask(event) {
         }
     });
 
-    // Функция сохранения
     function finishEditing() {
         const newText = input.value.trim();
 
-        // Если текст пустой — не сохраняем, отменяем
         if (newText === '') {
             alert('Задача не может быть пустой!');
             cancelEditing();
             return;
         }
 
-        // Обновляем задачу в массиве
         task.text = newText;
         saveToLocalStorage();
 
-        // Создаём новый span с обновлённым текстом
         const newTaskTitleElement = document.createElement('span');
         newTaskTitleElement.className = task.done ? 'task-title task-title--done' : 'task-title';
         newTaskTitleElement.textContent = newText;
 
-        // Заменяем input на span
         input.replaceWith(newTaskTitleElement);
     }
 
-    // Функция отмены (Escape или пустой ввод)
     function cancelEditing() {
-        // Восстанавливаем исходный span
         const originalSpan = document.createElement('span');
         originalSpan.className = task.done ? 'task-title task-title--done' : 'task-title';
         originalSpan.textContent = task.text;
 
-        // Заменяем input на span
         input.replaceWith(originalSpan);
     }
 }
@@ -223,39 +204,29 @@ function renderTask(task){
 }
 
 function downloadTasksAsJson() {
-    // Если задач нет — предупредим пользователя
     if (tasks.length === 0) {
         alert('Нет задач для сохранения!');
         return;
     }
 
-    // Преобразуем массив задач в JSON-строку
-    const dataStr = JSON.stringify(tasks, null, 2); // null, 2 — для красивого форматирования
+    const dataStr = JSON.stringify(tasks, null, 2);
 
-    // Создаём Blob (двоичный объект) с типом JSON
     const blob = new Blob([dataStr], { type: 'application/json' });
 
-    // Создаём ссылку для скачивания
     const url = URL.createObjectURL(blob);
 
-    // Создаём невидимую <a> ссылку
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'my-tasks.json'; // ← имя файла при скачивании
+    a.download = 'my-tasks.json'; 
 
-    // Добавляем ссылку в DOM (временно)
     document.body.appendChild(a);
 
-    // Эмулируем клик по ссылке → начинается скачивание
     a.click();
 
-    // Удаляем ссылку из DOM
     document.body.removeChild(a);
 
-    // Освобождаем URL
     URL.revokeObjectURL(url);
 
-    // Необязательно: уведомление
     alert('Задачи сохранены в файл my-tasks.json!');
 }
 
@@ -269,15 +240,12 @@ function handleFileSelect(event) {
 
     reader.onload = function(e) {
         try {
-            // Парсим JSON из файла
             const loadedTasks = JSON.parse(e.target.result);
 
-            // Проверяем, что это массив
             if (!Array.isArray(loadedTasks)) {
                 throw new Error('Файл должен содержать массив задач');
             }
 
-            // Проверяем структуру каждой задачи
             for (let task of loadedTasks) {
                 if (
                     typeof task.id !== 'number' ||
@@ -288,19 +256,14 @@ function handleFileSelect(event) {
                 }
             }
 
-            // Очищаем текущие задачи
             tasks = loadedTasks;
 
-            // Очищаем DOM
             tasksList.innerHTML = '';
 
-            // Рендерим все загруженные задачи
             tasks.forEach(task => renderTask(task));
 
-            // Сохраняем в localStorage
             saveToLocalStorage();
 
-            // Проверяем, не пуст ли список
             checkEmptyList();
 
             alert('Задачи успешно загружены из файла!');
@@ -309,7 +272,6 @@ function handleFileSelect(event) {
             alert('Ошибка при загрузке файла: ' + error.message);
             console.error(error);
         } finally {
-            // Сбрасываем input, чтобы можно было выбрать тот же файл снова
             fileInput.value = '';
         }
     };
@@ -318,6 +280,5 @@ function handleFileSelect(event) {
         alert('Ошибка чтения файла');
     };
 
-    // Читаем файл как текст
     reader.readAsText(file);
 }
