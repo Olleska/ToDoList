@@ -15,6 +15,7 @@ checkEmptyList();
 form.addEventListener('submit', addTask);
 tasksList.addEventListener('click',deleteTask);
 tasksList.addEventListener('click',doneTask);
+tasksList.addEventListener('click', editTask); 
 
 function addTask(event){
     event.preventDefault();
@@ -77,6 +78,103 @@ function doneTask(event){
     taskTitle.classList.toggle('task-title--done');
 }
 
+function editTask(event) {
+    // Проверяем, что кликнули именно по кнопке редактирования
+    if (event.target.dataset.action !== "edit") return;
+
+    // Находим задачу в DOM
+    const parentNode = event.target.closest('.list-group-item');
+    const id = Number(parentNode.id);
+
+    // Находим задачу в массиве
+    const task = tasks.find(task => task.id === id);
+    if (!task) return;
+
+    // Находим элемент с текстом задачи
+    const taskTitleElement = parentNode.querySelector('.task-title');
+    if (!taskTitleElement) return;
+
+    // Создаём инпут для редактирования
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control form-control-sm';
+    input.value = task.text;
+
+    // Стили, чтобы не ломался макет
+    input.style.width = `$600px`;
+    input.style.minWidth = '50px';
+    input.style.maxWidth = '900px';
+    input.style.border = '1px solid #b300ffff';
+    input.style.borderRadius = '4px';
+    input.style.padding = '2px 6px';
+
+    // Заменяем текст на инпут
+    taskTitleElement.replaceWith(input);
+
+    // Фокус на поле
+    input.focus();
+
+    // Флаг, чтобы избежать двойного вызова при Enter + blur
+    let isHandled = false;
+
+    // Сохраняем при потере фокуса
+    input.addEventListener('blur', () => {
+        if (isHandled) return;
+        isHandled = true;
+        finishEditing();
+    });
+
+    // Сохраняем по Enter, отменяем по Escape
+    input.addEventListener('keydown', (e) => {
+        if (isHandled) return;
+
+        if (e.key === 'Enter') {
+            isHandled = true;
+            finishEditing();
+        }
+        if (e.key === 'Escape') {
+            isHandled = true;
+            cancelEditing();
+            e.preventDefault();
+        }
+    });
+
+    // Функция сохранения
+    function finishEditing() {
+        const newText = input.value.trim();
+
+        // Если текст пустой — не сохраняем, отменяем
+        if (newText === '') {
+            alert('Задача не может быть пустой!');
+            cancelEditing();
+            return;
+        }
+
+        // Обновляем задачу в массиве
+        task.text = newText;
+        saveToLocalStorage();
+
+        // Создаём новый span с обновлённым текстом
+        const newTaskTitleElement = document.createElement('span');
+        newTaskTitleElement.className = task.done ? 'task-title task-title--done' : 'task-title';
+        newTaskTitleElement.textContent = newText;
+
+        // Заменяем input на span
+        input.replaceWith(newTaskTitleElement);
+    }
+
+    // Функция отмены (Escape или пустой ввод)
+    function cancelEditing() {
+        // Восстанавливаем исходный span
+        const originalSpan = document.createElement('span');
+        originalSpan.className = task.done ? 'task-title task-title--done' : 'task-title';
+        originalSpan.textContent = task.text;
+
+        // Заменяем input на span
+        input.replaceWith(originalSpan);
+    }
+}
+
 function checkEmptyList(){
     if (tasks.length === 0){
         const emptyListHTML=`<li id="emptyList" class="list-group-item empty-list">
@@ -116,3 +214,4 @@ function renderTask(task){
 
     tasksList.insertAdjacentHTML('beforeend', taskHTML);
 }
+
