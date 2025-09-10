@@ -2,6 +2,9 @@ const form = document.querySelector('#form');
 const taskInput = document.querySelector('#taskInput');
 const tasksList = document.querySelector('#tasksList');
 const emptyList = document.querySelector('#emptyList');
+const saveJsonBtn = document.querySelector('#saveJsonBtn');
+const loadJsonBtn = document.querySelector('#loadJsonBtn');
+const fileInput = document.querySelector('#fileInput');
 
 let tasks = [];
 
@@ -16,6 +19,10 @@ form.addEventListener('submit', addTask);
 tasksList.addEventListener('click',deleteTask);
 tasksList.addEventListener('click',doneTask);
 tasksList.addEventListener('click', editTask); 
+saveJsonBtn.addEventListener('click', downloadTasksAsJson);
+loadJsonBtn.addEventListener('click', () => {
+    fileInput.click(); 
+});
 
 function addTask(event){
     event.preventDefault();
@@ -215,3 +222,102 @@ function renderTask(task){
     tasksList.insertAdjacentHTML('beforeend', taskHTML);
 }
 
+function downloadTasksAsJson() {
+    // Если задач нет — предупредим пользователя
+    if (tasks.length === 0) {
+        alert('Нет задач для сохранения!');
+        return;
+    }
+
+    // Преобразуем массив задач в JSON-строку
+    const dataStr = JSON.stringify(tasks, null, 2); // null, 2 — для красивого форматирования
+
+    // Создаём Blob (двоичный объект) с типом JSON
+    const blob = new Blob([dataStr], { type: 'application/json' });
+
+    // Создаём ссылку для скачивания
+    const url = URL.createObjectURL(blob);
+
+    // Создаём невидимую <a> ссылку
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'my-tasks.json'; // ← имя файла при скачивании
+
+    // Добавляем ссылку в DOM (временно)
+    document.body.appendChild(a);
+
+    // Эмулируем клик по ссылке → начинается скачивание
+    a.click();
+
+    // Удаляем ссылку из DOM
+    document.body.removeChild(a);
+
+    // Освобождаем URL
+    URL.revokeObjectURL(url);
+
+    // Необязательно: уведомление
+    alert('Задачи сохранены в файл my-tasks.json!');
+}
+
+fileInput.addEventListener('change', handleFileSelect);
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        try {
+            // Парсим JSON из файла
+            const loadedTasks = JSON.parse(e.target.result);
+
+            // Проверяем, что это массив
+            if (!Array.isArray(loadedTasks)) {
+                throw new Error('Файл должен содержать массив задач');
+            }
+
+            // Проверяем структуру каждой задачи
+            for (let task of loadedTasks) {
+                if (
+                    typeof task.id !== 'number' ||
+                    typeof task.text !== 'string' ||
+                    typeof task.done !== 'boolean'
+                ) {
+                    throw new Error('Неверный формат задачи в файле');
+                }
+            }
+
+            // Очищаем текущие задачи
+            tasks = loadedTasks;
+
+            // Очищаем DOM
+            tasksList.innerHTML = '';
+
+            // Рендерим все загруженные задачи
+            tasks.forEach(task => renderTask(task));
+
+            // Сохраняем в localStorage
+            saveToLocalStorage();
+
+            // Проверяем, не пуст ли список
+            checkEmptyList();
+
+            alert('Задачи успешно загружены из файла!');
+
+        } catch (error) {
+            alert('Ошибка при загрузке файла: ' + error.message);
+            console.error(error);
+        } finally {
+            // Сбрасываем input, чтобы можно было выбрать тот же файл снова
+            fileInput.value = '';
+        }
+    };
+
+    reader.onerror = function() {
+        alert('Ошибка чтения файла');
+    };
+
+    // Читаем файл как текст
+    reader.readAsText(file);
+}

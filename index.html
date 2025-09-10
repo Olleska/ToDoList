@@ -46,9 +46,12 @@
 				<form id="form">
 					<div class="form-group">
 						<input type="text" class="form-control" id="taskInput" placeholder="Текст задачи" required>
-						<small id="emailHelp" class="form-text text-muted">Что делаем, сколько времени тратим, какой результат получаем.</small>
+						<small id="emailHelp" class="form-text text-muted">Что делаем?</small>
 					</div>
 					<button type="submit" class="btn btn-primary  btn-lg active" style="background-color:#b180ff">Добавить</button>
+					<button type="button" id="saveJsonBtn" class="btn btn-primary btn-lg active" style="background-color:#b180ff; margin-left: 10px;" >Сохранить</button>
+					<button type="button" id="loadJsonBtn" class="btn btn-secondary btn-lg active" style="background-color:#b180ff; margin-left: 10px;">Загрузить</button>
+					<input type="file" id="fileInput" accept=".json" style="display: none;">
 				</form>
 			</div>
 		</div>
